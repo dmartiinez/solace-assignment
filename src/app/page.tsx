@@ -8,57 +8,50 @@ export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  const handler = setTimeout(() => {
+    setDebouncedSearchTerm(searchTerm);
+  }, 400);
+
+  return () => {
+    clearTimeout(handler);
+  };
+}, [searchTerm]);
 
   useEffect(() => {
     const fetchAdvocates = async function() {
       try {
         console.log("fetching advocates...");
-        const response = await fetch("/api/advocates")
+        const response = await fetch(`/api/advocates?search=${encodeURIComponent(searchTerm)}`);
 
         if (!response.ok) {
           throw new Error("Request to fetch advocates failed.");
         }
 
-        const jsonResponse = await response.json()
+        const jsonResponse = await response.json();
         setAdvocates(jsonResponse.data);
         setFilteredAdvocates(jsonResponse.data);
       } catch (error) {
-        console.log("Failed to fetch advocates with error: " + error)
+        console.log("Failed to fetch advocates with error: " + error);
       } finally {
-       setLoading(false)
+       setLoading(false);
       }
     }
     
     fetchAdvocates()
-  }, []);
+  }, [debouncedSearchTerm]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchedTerm = e.target.value;
-
-    setSearchTerm(searchedTerm)
-
-    console.log("filtering advocates...");
-
-    const filteredAdvocates = advocates.filter((advocate: Advocate) => {
-      const lowerCaseTerm = searchedTerm.toLowerCase()
-
-      return (
-        advocate.firstName.toLowerCase().includes(lowerCaseTerm) ||
-        advocate.lastName.toLowerCase().includes(lowerCaseTerm) ||
-        advocate.city.toLowerCase().includes(lowerCaseTerm) ||
-        advocate.degree.toLowerCase().includes(lowerCaseTerm) ||
-        advocate.specialties.map(specialty => specialty.toLowerCase()).some(specialty => specialty.includes(lowerCaseTerm)) ||
-        advocate.yearsOfExperience.toString().includes(lowerCaseTerm)
-      );
-    });
-
-    setFilteredAdvocates(filteredAdvocates);
+    setSearchTerm(searchedTerm);
   };
 
   const onClick = () => {
-    console.log(advocates);
     setFilteredAdvocates(advocates);
+    setSearchTerm("");
   };
 
   return (
