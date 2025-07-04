@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Advocate } from "@/types/advocate";
+import "./globals.css"
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
@@ -59,46 +60,39 @@ export default function Home() {
 
   return (
     <main style={{ margin: "24px" }}>
-      <h1>Solace Advocates</h1>
+      <h1 className="bg-green-800 py-4 px-4 text-white text-2xl">Solace Advocates</h1>
       <br />
       <br />
-      <div>
-        <p>Search</p>
-        <p>
-          Searching for: <span id="search-term">{searchTerm}</span>
-        </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
-        <button onClick={onClick}>Reset Search</button>
+      <div className="flex w-full">
+        <label className= "hidden" htmlFor="search">Search</label>
+        <input className="w-4/12 py-4 px-4" id="search" placeholder="Search For Advocates" style={{ border: "1px solid black" }} onChange={onChange} />
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded ml-3" onClick={onClick}>Reset Search</button>
       </div>
       <br />
       <br />
-      <table>
+      <table className="border-collapse border-2 border-gray-500">
         <thead>
           <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>City</th>
-            <th>Degree</th>
-            <th>Specialties</th>
-            <th>Years of Experience</th>
-            <th>Phone Number</th>
+            <th className="border border-gray-400 px-4 py-2 text-gray-800">Advocate Name</th>
+            <th className="border border-gray-400 px-4 py-2 text-gray-800">City</th>
+            <th className="border border-gray-400 px-4 py-2 text-gray-800">Degree</th>
+            <th className="border border-gray-400 px-4 py-2 text-gray-800">Specialties</th>
+            <th className="border border-gray-400 px-4 py-2 text-gray-800">Years of Experience</th>
+            <th className="border border-gray-400 px-4 py-2 text-gray-800">Phone Number</th>
           </tr>
         </thead>
         <tbody>
           {filteredAdvocates.map((advocate: Advocate, index) => {
             return (
               <tr key={`advocate.id_${index}`}>
-                <td>{advocate.firstName}</td>
-                <td>{advocate.lastName}</td>
-                <td>{advocate.city}</td>
-                <td>{advocate.degree}</td>
-                <td>
-                  {advocate.specialties.map((s: string, index: number) => (
-                    <div key={`advocate.id_${index}`}>{s}</div>
-                  ))}
+                <td className="border border-gray-400 px-4 py-2 text-center">{advocate.firstName + " " + advocate.lastName}</td>
+                <td className="border border-gray-400 px-4 py-2 text-center">{advocate.city}</td>
+                <td className="border border-gray-400 px-4 py-2 text-center">{advocate.degree}</td>
+                <td className="border border-gray-400 px-4 py-2 text-center">
+                  <p>{advocate.specialties.join(", ")}</p>
                 </td>
-                <td>{advocate.yearsOfExperience}</td>
-                <td>{advocate.phoneNumber}</td>
+                <td className="border border-gray-400 px-4 py-2 text-center">{advocate.yearsOfExperience}</td>
+                <td className="border border-gray-400 px-4 py-2 text-center">{advocate.phoneNumber}</td>
               </tr>
             );
           })}
