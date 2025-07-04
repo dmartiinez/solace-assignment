@@ -5,7 +5,6 @@ import { Advocate } from "@/types/advocate";
 import "./globals.css"
 
 export default function Home() {
-  const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
@@ -22,6 +21,7 @@ export default function Home() {
 }, [searchTerm]);
 
   useEffect(() => {
+    setLoading(true)
     const fetchAdvocates = async function() {
       try {
         console.log("fetching advocates...");
@@ -32,7 +32,6 @@ export default function Home() {
         }
 
         const jsonResponse = await response.json();
-        setAdvocates(jsonResponse.data);
         setFilteredAdvocates(jsonResponse.data);
       } catch (error) {
         console.log("Failed to fetch advocates with error: " + error);
@@ -50,7 +49,6 @@ export default function Home() {
   };
 
   const onClick = () => {
-    setFilteredAdvocates(advocates);
     setSearchTerm("");
   };
 
