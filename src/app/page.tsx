@@ -1,31 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Advocate } from "@/db/schema";
-
+import { Advocate } from "@/types/advocate";
 
 export default function Home() {
-  const [advocates, setAdvocates] = useState([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [advocates, setAdvocates] = useState<Advocate[]>([]);
+  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
-    console.log("fetching advocates...");
-    fetch("/api/advocates").then((response) => {
-      response.json().then((jsonResponse) => {
+    const fetchAdvocates = async function() {
+      try {
+        console.log("fetching advocates...");
+        const response = await fetch("/api/advocates")
+
+        if (!response.ok) {
+          throw new Error("Request to fetch advocates failed.");
+        }
+
+        const jsonResponse = await response.json()
         setAdvocates(jsonResponse.data);
         setFilteredAdvocates(jsonResponse.data);
-      });
-    });
+      } catch (error) {
+        console.log("Failed to fetch advocates with error: " + error)
+      }
+    }
+    
+    fetchAdvocates()
   }, []);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = e.target.value;
-    const element = document.getElementById("search-term")
+    const searchedTerm = e.target.value;
 
-    if (element) {
-      element.innerHTML = searchTerm;
-    }
-    
+    setSearchTerm(searchedTerm)
 
     console.log("filtering advocates...");
 
@@ -58,7 +65,7 @@ export default function Home() {
       <div>
         <p>Search</p>
         <p>
-          Searching for: <span id="search-term"></span>
+          Searching for: <span id="search-term">{searchTerm}</span>
         </p>
         <input style={{ border: "1px solid black" }} onChange={onChange} />
         <button onClick={onClick}>Reset Search</button>
@@ -80,14 +87,14 @@ export default function Home() {
         <tbody>
           {filteredAdvocates.map((advocate: Advocate, index) => {
             return (
-              <tr key={index}>
+              <tr key={`advocate.id_${index}`}>
                 <td>{advocate.firstName}</td>
                 <td>{advocate.lastName}</td>
                 <td>{advocate.city}</td>
                 <td>{advocate.degree}</td>
                 <td>
                   {advocate.specialties.map((s: string, index: number) => (
-                    <div key={index}>{s}</div>
+                    <div key={`advocate.id_${index}`}>{s}</div>
                   ))}
                 </td>
                 <td>{advocate.yearsOfExperience}</td>
