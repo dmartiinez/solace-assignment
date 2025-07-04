@@ -7,3 +7,7 @@ main h1 {
     margin-right: -24px; 
     margin-top: -24px;
 }
+
+.loading-screen button {
+    width: 100%;
+}
