@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Advocate } from "@/db/schema";
+
 
 export default function Home() {
   const [advocates, setAdvocates] = useState([]);
@@ -16,20 +18,27 @@ export default function Home() {
     });
   }, []);
 
-  const onChange = (e) => {
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value;
+    const element = document.getElementById("search-term")
 
-    document.getElementById("search-term").innerHTML = searchTerm;
+    if (element) {
+      element.innerHTML = searchTerm;
+    }
+    
 
     console.log("filtering advocates...");
-    const filteredAdvocates = advocates.filter((advocate) => {
+
+    const filteredAdvocates = advocates.filter((advocate: Advocate) => {
+      const lowerCaseTerm = searchTerm.toLowerCase()
+
       return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
+        advocate.firstName.toLowerCase().includes(lowerCaseTerm) ||
+        advocate.lastName.toLowerCase().includes(lowerCaseTerm) ||
+        advocate.city.toLowerCase().includes(lowerCaseTerm) ||
+        advocate.degree.toLowerCase().includes(lowerCaseTerm) ||
+        advocate.specialties.map(specialty => specialty.toLowerCase()).some(specialty => specialty.includes(lowerCaseTerm)) ||
+        advocate.yearsOfExperience.toString().includes(lowerCaseTerm)
       );
     });
 
@@ -58,25 +67,27 @@ export default function Home() {
       <br />
       <table>
         <thead>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>City</th>
-          <th>Degree</th>
-          <th>Specialties</th>
-          <th>Years of Experience</th>
-          <th>Phone Number</th>
+          <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>City</th>
+            <th>Degree</th>
+            <th>Specialties</th>
+            <th>Years of Experience</th>
+            <th>Phone Number</th>
+          </tr>
         </thead>
         <tbody>
-          {filteredAdvocates.map((advocate) => {
+          {filteredAdvocates.map((advocate: Advocate, index) => {
             return (
-              <tr>
+              <tr key={index}>
                 <td>{advocate.firstName}</td>
                 <td>{advocate.lastName}</td>
                 <td>{advocate.city}</td>
                 <td>{advocate.degree}</td>
                 <td>
-                  {advocate.specialties.map((s) => (
-                    <div>{s}</div>
+                  {advocate.specialties.map((s: string, index: number) => (
+                    <div key={index}>{s}</div>
                   ))}
                 </td>
                 <td>{advocate.yearsOfExperience}</td>
