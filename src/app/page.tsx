@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import "./globals.css"
 import Pagination from "./components/Pagination";
 import Loading from "./components/Loading";
+import ResultItem from "./components/ResultItem";
 
 
 export default function Home() {
@@ -23,10 +24,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(null);
-  const [pageData, setPageData] = useState<{ start: number; end: number } | null>();
+  const [pageData, setPageData] = useState<{ start: number; end: number, totalResults: number } | null>();
   
   useEffect(() => {
-    console.log(rawPage)
   cleanUpParameters()
   const handler = setTimeout(() => {
     setDebouncedSearchTerm(searchTerm);
@@ -56,7 +56,8 @@ export default function Home() {
 
         setPageData({
           start: ((currentPage - 1) * resultsPerPage) + 1,
-          end: (total - (currentPage * resultsPerPage)) < 0  ? total : currentPage * resultsPerPage
+          end: (total - (currentPage * resultsPerPage)) < 0  ? total : currentPage * resultsPerPage,
+          totalResults: total
         })
         
       } catch (error) {
@@ -67,13 +68,13 @@ export default function Home() {
     }
     
     fetchAdvocates()
-  }, [debouncedSearchTerm, rawPage]);
+  }, [debouncedSearchTerm]);
 
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchedTerm = e.target.value;
     setSearchTerm(searchedTerm);
-    updateParameter({search: searchTerm});
+    updateParameter({search: searchedTerm});
   };
 
   const onClick = () => {
@@ -116,9 +117,6 @@ export default function Home() {
 
   return (
     <main style={{ margin: "24px" }}>
-      <h2>Solace Advocates</h2>
-      <p>{pageData && totalResults && `Results ${pageData?.start}-${pageData?.end} of ${totalResults}`}</p>
-      <br />
       {loading && <Loading />}
       {!loading &&(
         <>
@@ -128,41 +126,18 @@ export default function Home() {
             <button className="bg-green-800 hover:bg-green-600 text-white font-bold py-2 px-4 border border-blue-700 rounded ml-3" onClick={onClick}>Reset Search</button>
           </div>
           <br />
+          <h2>Solace Advocates</h2>
+          <p>{pageData && pageData.totalResults > 0 && (`Results ${pageData?.start}-${pageData?.end} of ${totalResults}`)}</p>
           <br />
           {filteredAdvocates.length == 0 && (
             <p className="text-center">No Advocates Found with that search term. Please try again.</p>
           )}
           {filteredAdvocates.length > 0 && (
-            <table className="border-collapse border-2 border-gray-500 w-full">
-              <thead>
-                <tr>
-                  <th className="border border-gray-400 px-4 py-2 text-gray-800">Advocate Name</th>
-                  <th className="border border-gray-400 px-4 py-2 text-gray-800">City</th>
-                  <th className="border border-gray-400 px-4 py-2 text-gray-800">Degree</th>
-                  <th className="border border-gray-400 px-4 py-2 text-gray-800">Specialties</th>
-                  <th className="border border-gray-400 px-4 py-2 text-gray-800">Years of Experience</th>
-                  <th className="border border-gray-400 px-4 py-2 text-gray-800">Phone Number</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAdvocates.map((advocate: Advocate, index) => {
-                  return (
-                    <tr key={`advocate.id_${index}`}>
-                      <td className="border border-gray-400 px-4 py-2 text-center">{advocate.firstName + " " + advocate.lastName}</td>
-                      <td className="border border-gray-400 px-4 py-2 text-center">{advocate.city}</td>
-                      <td className="border border-gray-400 px-4 py-2 text-center">{advocate.degree}</td>
-                      <td className="border border-gray-400 px-4 py-2 text-center">
-                        <p>{advocate.specialties.join(", ")}</p>
-                      </td>
-                      <td className="border border-gray-400 px-4 py-2 text-center">{advocate.yearsOfExperience}</td>
-                      <td className="border border-gray-400 px-4 py-2 text-center">{advocate.phoneNumber}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            filteredAdvocates.map((advocate: Advocate, index) => {
+              return <ResultItem key={`advocate_${index}`} advocate={advocate} />
+            })
           )}
-          <Pagination search={searchTerm} page={currentPage} totalPages={totalPages} />
+          {pageData && pageData.totalResults > 0 && <Pagination search={searchTerm} page={currentPage} totalPages={totalPages} />}
         </>
       )}
     </main>

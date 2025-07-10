@@ -3,8 +3,8 @@ import Link from "next/link"
 
 const Pagination = ({ search, page, totalPages }: { search: string; page: number, totalPages: number })  => {
     return (
-        <>
-            <Link className={page <=1 ? 'pointer-events-none opacity-50' : ''} href={{
+        <div className="pagination-wrapper mt-[10px] mb-[10px] mr-[24px] text-right">
+            <Link className={`mr-[10px] ${page <=1 ? 'pointer-events-none opacity-50' : ''}`} href={{
                 pathname: '/',
                 query: {
                   ...(search ? { search } : {}),
@@ -22,7 +22,7 @@ const Pagination = ({ search, page, totalPages }: { search: string; page: number
             }}>
                 Next
             </Link>
-        </>
+        </div>
     );
 }
 
