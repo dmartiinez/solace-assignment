@@ -2,15 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { Advocate } from "@/types/advocate";
+import { useRouter, useSearchParams } from "next/navigation";
 import "./globals.css"
+import Pagination from "./components/Pagination";
+import Loading from "./components/Loading";
+
 
 export default function Home() {
+  const router = useRouter();
+  const params = useSearchParams();
+  let rawPage = params.get('page')?.trim();
+  rawPage = rawPage && !isNaN(Number(rawPage)) ? rawPage : "1";
+  const currentPage: number = Number(rawPage)
+  const resultsPerPage = 10;
+
+
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState(params.get('search') || '')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [loading, setLoading] = useState(true);
-
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(null);
+  const [pageData, setPageData] = useState<{ start: number; end: number } | null>();
+  
   useEffect(() => {
+    console.log(rawPage)
+  cleanUpParameters()
   const handler = setTimeout(() => {
     setDebouncedSearchTerm(searchTerm);
   }, 400);
@@ -25,7 +42,7 @@ export default function Home() {
     const fetchAdvocates = async function() {
       try {
         console.log("fetching advocates...");
-        const response = await fetch(`/api/advocates?search=${encodeURIComponent(searchTerm)}`);
+        const response = await fetch(`/api/advocates?search=${encodeURIComponent(searchTerm)}&page=${rawPage}`);
 
         if (!response.ok) {
           throw new Error("Request to fetch advocates failed.");
@@ -33,6 +50,15 @@ export default function Home() {
 
         const jsonResponse = await response.json();
         setFilteredAdvocates(jsonResponse.data);
+        setTotalPages(jsonResponse.totalPages);
+        const total = jsonResponse.totalResults
+        setTotalResults(total);
+
+        setPageData({
+          start: ((currentPage - 1) * resultsPerPage) + 1,
+          end: (total - (currentPage * resultsPerPage)) < 0  ? total : currentPage * resultsPerPage
+        })
+        
       } catch (error) {
         console.log("Failed to fetch advocates with error: " + error);
       } finally {
@@ -41,39 +67,65 @@ export default function Home() {
     }
     
     fetchAdvocates()
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, rawPage]);
+
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchedTerm = e.target.value;
     setSearchTerm(searchedTerm);
+    updateParameter({search: searchTerm});
   };
 
   const onClick = () => {
     setSearchTerm("");
   };
 
+  const updateParameter = (updates: Record<string, any> ) => {
+    const newParams = new URLSearchParams(params.toString());
+
+    for(const key in updates) {
+      if (updates[key] === undefined || updates[key] === '') {
+        newParams.delete(key);
+      } else {
+        newParams.set(key, updates[key]);
+      }
+    }
+
+    router.push(`?${newParams.toString()}`);
+  };
+
+  const cleanUpParameters = () => {
+    const url = new URL(window.location.href);
+    const page = url.searchParams.get("page");
+    const search = url.searchParams.get("search");
+    let modified = false
+
+    if (page && isNaN(Number(page))) {
+      url.searchParams.delete("page");
+      modified = true;
+    } 
+
+    if (!search) {
+      url.searchParams.delete("search");
+      modified = true;
+    } 
+    if (modified) {
+      window.history.replaceState(null, "", url.toString());
+    }
+  }
+
   return (
     <main style={{ margin: "24px" }}>
-      <h1 className="bg-green-800 py-4 px-4 text-white text-2xl">Solace Advocates</h1>
+      <h2>Solace Advocates</h2>
+      <p>{pageData && totalResults && `Results ${pageData?.start}-${pageData?.end} of ${totalResults}`}</p>
       <br />
-      <br />
-      {loading && (
-        <div className="loading-screen">
-          <button type="button" className="flex text-green-800 w-1/2 items-center justify-center" disabled>
-            <svg className="mr-3 animate-spin -ml-1 mr-3 h-5 w-5 text-green-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Fetching Advocates
-          </button>
-        </div>
-      )}
+      {loading && <Loading />}
       {!loading &&(
         <>
           <div className="flex w-full">
             <label className= "hidden" htmlFor="search">Search</label>
             <input className="w-4/12 py-4 px-4" id="search" placeholder="Search For Advocates" style={{ border: "1px solid black" }} onChange={onChange} value={searchTerm} />
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded ml-3" onClick={onClick}>Reset Search</button>
+            <button className="bg-green-800 hover:bg-green-600 text-white font-bold py-2 px-4 border border-blue-700 rounded ml-3" onClick={onClick}>Reset Search</button>
           </div>
           <br />
           <br />
@@ -110,7 +162,9 @@ export default function Home() {
               </tbody>
             </table>
           )}
-        </>)}
+          <Pagination search={searchTerm} page={currentPage} totalPages={totalPages} />
+        </>
+      )}
     </main>
   );
 }
